@@ -111,6 +111,7 @@ pathLength path = sum $ zipWith manhattanDistance path (tail path)
 
 -- Part 1 Problem
 -- Find the intersection point that is closest to the origin (Node 1 1) using Manhattan distance
+-- Note that paths must intersect at the origin, so we have to exclude the origin
 closestIntersection :: [Maybe Point] -> (Point, Int)
 closestIntersection maybeIntersections =
     if null intersections 
@@ -123,6 +124,7 @@ closestIntersection maybeIntersections =
 
 -- Part 2 problem
 -- Find the intersection point that is closest to the origin (Node 1 1) using path length
+-- Note that paths must intersect at the origin, so we have to exclude the origin
 closestIntersection' :: [Edge] -> [Edge] -> [Maybe Point] -> (Point, Int)
 closestIntersection' path1 path2 maybeIntersections =
     if null intersections 
@@ -133,6 +135,12 @@ closestIntersection' path1 path2 maybeIntersections =
         distances xs = zip xs (map (combinedPathLength path1 path2) xs)
         myCompare p1 p2 = compare (snd p1) (snd p2)
 
+combinedPathLength :: [Edge] -> [Edge] -> Point -> Int
+combinedPathLength p1 p2 pt = 
+    onePathLength p1 pt + onePathLength p2 pt
+    where
+        onePathLength p pt = pathLength . pathFromEdges $ pathToIntercept p pt
+        
 pathToIntercept :: [Edge] -> Point -> [Edge]
 pathToIntercept path point = go path point
     where
@@ -145,13 +153,6 @@ pathToIntercept path point = go path point
             if onEdge pt e 
                 then [Edge p1 pt]
                 else e : go es pt
-
-combinedPathLength :: [Edge] -> [Edge] -> Point -> Int
-combinedPathLength p1 p2 pt = 
-    onePathLength p1 pt + onePathLength p2 pt
-    where
-        onePathLength p pt = pathLength . pathFromEdges $ pathToIntercept p pt
-
 
 main :: IO ()
 main = do
