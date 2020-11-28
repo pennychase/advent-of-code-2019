@@ -9,6 +9,9 @@ data Point = Point Int Int
 data Edge = Edge Point Point
     deriving (Show, Eq, Ord)
 
+data Direction = Direction Char Int
+    deriving (Show)
+
 --
 -- For parsing the Directions
 --
@@ -19,36 +22,27 @@ readInt = read
 splitComma :: String -> [String]
 splitComma xs = words $ map (\x -> if x == ',' then ' ' else x) xs
 
-parseDirection :: String -> (Char, Int)
-parseDirection str = (head str, readInt (tail str))
+parseDirection :: String -> Direction
+parseDirection str = Direction (head str) (readInt (tail str))
 
 --
--- For creating the paths as a list of Edges and converting to a list of Points
+-- Create paths of Points and Edges
 --
 
--- Given a Point and a direction, construct the edge by adding/subtracting the
--- length to the coordinate indicated by the direction
-mkEdge :: Point -> (Char, Int) -> Edge
-mkEdge current direction = Edge current (mkPoint current direction)
-    where
-        mkPoint (Point x y) (d, n) = 
-            case d of
-                'R' -> Point (x + n) y
-                'L' -> Point (x - n) y
-                'U' -> Point x (y + n)
-                'D' -> Point x (y - n)
+nextPoint :: Point -> Direction -> Point
+nextPoint (Point x y) (Direction d n) =
+    case d of
+        'R' -> Point (x + n) y
+        'L' -> Point (x - n) y
+        'U' -> Point x (y + n)
+        'D' -> Point x (y - n)
 
-mkEdges :: Point ->  [(Char, Int)] -> [Edge]
-mkEdges _ [] = []
-mkEdges point (d:ds) =  edge : mkEdges n2 ds
-    where
-        edge@(Edge _ n2) = mkEdge point d
+mkPath :: Point -> [Direction] -> [Point]
+mkPath point [] = [point]
+mkPath point (dir:dirs) = point : mkPath (nextPoint point dir) dirs
 
-pathFromEdges :: [Edge] -> [Point]
-pathFromEdges edges = origin : map getPoint edges
-    where
-        Edge origin _ = head edges
-        getPoint (Edge _ point) = point
+mkEdges :: [Point] -> [Edge]
+mkEdges points = zipWith Edge points (tail points)
 
 --
 -- Utilities for edges
@@ -139,9 +133,9 @@ combinedPathLength :: [Edge] -> [Edge] -> Point -> Int
 combinedPathLength p1 p2 pt = 
     onePathLength p1 pt + onePathLength p2 pt
     where
-        onePathLength p pt = pathLength . pathFromEdges $ pathToIntercept p pt
-        
-pathToIntercept :: [Edge] -> Point -> [Edge]
+        onePathLength p pt = pathLength $ pathToIntercept p pt
+
+pathToIntercept :: [Edge] -> Point -> [Point]
 pathToIntercept path point = go path point
     where
         onEdge (Point x y) edge@(Edge (Point x1 y1) (Point x2 y2))
@@ -149,17 +143,17 @@ pathToIntercept path point = go path point
             | vertical edge     = y == y1 && coordBetween x x1 x2
             | otherwise         = False
         go [] _ = []
-        go (e@(Edge p1 _):es) pt =
+        go (e@(Edge p1 p2):es) pt =
             if onEdge pt e 
-                then [Edge p1 pt]
-                else e : go es pt
+                then [p1, pt]
+                else p1:p2:go es pt
 
 main :: IO ()
 main = do
     contents <- readFile "day-3-input.txt"
     let [d1, d2] = map  (map parseDirection . splitComma) (lines contents)
-    let p1 = mkEdges (Point 1 1) d1
-    let p2 = mkEdges (Point 1 1) d2
+    let p1 = mkEdges $ mkPath (Point 1 1) d1
+    let p2 = mkEdges $ mkPath (Point 1 1) d2
     let intersects = pathsIntersects p1 p2
     print $ closestIntersection intersects
     print $ closestIntersection' p1 p2 intersects
