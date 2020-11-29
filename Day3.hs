@@ -44,10 +44,6 @@ mkPath point (dir:dirs) = point : mkPath (nextPoint point dir) dirs
 mkEdges :: [Point] -> [Edge]
 mkEdges points = zipWith Edge points (tail points)
 
---
--- Utilities for edges
---
-
 -- Determine if an edge is horizontal
 horizontal :: Edge -> Bool
 horizontal (Edge (Point x1 _) (Point x2 _)) = x1 == x2
@@ -100,6 +96,7 @@ intercept hEdge vEdge =
 manhattanDistance :: Point -> Point -> Int
 manhattanDistance (Point x1 y1) (Point x2 y2) = abs (x1 - x2) + abs (y1 - y2)
 
+-- The length of a path will be used as a distance
 pathLength :: [Point] -> Int
 pathLength path = sum $ zipWith manhattanDistance path (tail path)
 
