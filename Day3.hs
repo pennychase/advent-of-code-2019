@@ -60,10 +60,11 @@ coordBetween c c1 c2 = c >= min c1 c2 && c <= max c1 c2
 -- Functions to find all the intersections between two paths
 --
 
--- Find all the points where the two paths (defined by their edges) intersect
+-- Find all the points where two paths intersect by seeing if each edge of one
+-- path intersects the other path
 pathsIntersects :: [Edge] -> [Edge] -> [Maybe Point]
-pathsIntersects p = 
-    foldr (\x xs -> map (edgeIntersect x) p ++ xs) []
+pathsIntersects path = 
+    foldr (\e es -> map (edgeIntersect e) path ++ es) []
 
 -- Find the Point at which two edges intersect
 -- Determine which edge is horizontal and which is vertical, and pass to
